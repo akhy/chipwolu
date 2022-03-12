@@ -8,15 +8,12 @@ import (
 )
 
 func main() {
-	game := &chip8.Game{
-		GameOpts: &chip8.DefaultGameOpts,
-		Display:  &chip8.DefaultDisplayOpts,
-	}
-	game.Init()
-	w, h := game.ScreenSize()
+	screen := chip8.NewScreen(chip8.DefaultScreenOpts)
+	cpu := &chip8.CPU{Screen: screen}
+	gameOpts := chip8.DefaultGameOpts
+	game := chip8.NewGame(cpu, screen, gameOpts)
 
-	ebiten.SetWindowSize(w, h)
-	ebiten.SetWindowTitle("CHIP-8")
+	ebiten.SetWindowSize(screen.Width*gameOpts.Scale, screen.Height*gameOpts.Scale)
 
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)

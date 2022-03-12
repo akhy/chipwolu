@@ -9,74 +9,64 @@ import (
 )
 
 type GameOpts struct {
-	Width  int
-	Height int
-}
-
-var DefaultGameOpts = GameOpts{
-	Width:  64,
-	Height: 32,
-}
-
-type DisplayOpts struct {
 	Scale   int
 	BgColor color.Color
 	FgColor color.Color
 }
 
-var DefaultDisplayOpts = DisplayOpts{
+var DefaultGameOpts = &GameOpts{
 	Scale:   16,
 	BgColor: color.Black,
 	FgColor: color.White,
 }
 
-type Game struct {
-	*GameOpts
-	Display *DisplayOpts
-
-	screen [][]bool
+type game struct {
+	opts   *GameOpts
+	screen *Screen
+	cpu    *CPU
 }
 
-func (g *Game) Init() {
-	g.ClearScreen()
-}
-
-func (g *Game) ScreenSize() (width, height int) {
-	return g.Width * g.Display.Scale, g.Height * g.Display.Scale
-}
-
-func (g *Game) ClearScreen() {
-	g.screen = make([][]bool, g.Width)
-	for x := range g.screen {
-		g.screen[x] = make([]bool, g.Height)
+func NewGame(cpu *CPU, screen *Screen, opts *GameOpts) ebiten.Game {
+	return &game{
+		opts:   opts,
+		cpu:    cpu,
+		screen: screen,
 	}
 }
 
-func (g *Game) Update() error {
-	x := rand.Intn(g.Width)
-	y := rand.Intn(g.Height)
-	g.screen[x][y] = true
+func (g *game) Init() {
+	g.screen.Clear()
+}
+
+func (g *game) Update() error {
+	x := rand.Intn(g.screen.Width)
+	y := rand.Intn(g.screen.Height)
+	g.screen.pixel[x][y] = true
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
-	stage := ebiten.NewImage(g.Width, g.Height)
-	stage.Fill(g.Display.BgColor)
-	for x := 0; x < g.Width; x++ {
-		for y := 0; y < g.Height; y++ {
-			if g.screen[x][y] {
-				stage.Set(x, y, g.Display.FgColor)
+func (g *game) Draw(screen *ebiten.Image) {
+	stage := ebiten.NewImage(g.screen.Width, g.screen.Height)
+	stage.Fill(g.opts.BgColor)
+	for x := 0; x < g.screen.Width; x++ {
+		for y := 0; y < g.screen.Height; y++ {
+			if g.screen.pixel[x][y] {
+				stage.Set(x, y, g.opts.FgColor)
 			}
 		}
 	}
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(float64(g.Display.Scale), float64(g.Display.Scale))
+	op.GeoM.Scale(float64(g.opts.Scale), float64(g.opts.Scale))
 	screen.DrawImage(stage, op)
 
 	ebitenutil.DebugPrint(screen, "Hello, World!")
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
+func (g *game) ScreenSize() (width, height int) {
+	return g.screen.Width * g.opts.Scale, g.screen.Height * g.opts.Scale
+}
+
+func (g *game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return g.ScreenSize()
 }
