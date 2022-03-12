@@ -8,13 +8,15 @@ import (
 )
 
 func main() {
-	screen := chip8.NewScreen(chip8.DefaultScreenOpts)
-	cpu := &chip8.CPU{Screen: screen}
+	emu := &chip8.Emulator{Width: 64, Height: 32}
+	emu.Init()
+	if err := emu.LoadGameROM("ibm.ch8"); err != nil {
+		panic(err)
+	}
+
 	gameOpts := chip8.DefaultGameOpts
-	game := chip8.NewGame(cpu, screen, gameOpts)
-
-	ebiten.SetWindowSize(screen.Width*gameOpts.Scale, screen.Height*gameOpts.Scale)
-
+	game := chip8.NewGame(emu, gameOpts)
+	ebiten.SetWindowSize(emu.Width*gameOpts.Scale, emu.Height*gameOpts.Scale)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

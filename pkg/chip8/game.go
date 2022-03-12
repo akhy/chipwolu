@@ -2,7 +2,6 @@ package chip8
 
 import (
 	"image/color"
-	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -21,36 +20,29 @@ var DefaultGameOpts = &GameOpts{
 }
 
 type game struct {
-	opts   *GameOpts
-	screen *Screen
-	cpu    *CPU
+	opts *GameOpts
+	emu  *Emulator
 }
 
-func NewGame(cpu *CPU, screen *Screen, opts *GameOpts) ebiten.Game {
+func NewGame(emu *Emulator, opts *GameOpts) ebiten.Game {
 	return &game{
-		opts:   opts,
-		cpu:    cpu,
-		screen: screen,
+		opts: opts,
+		emu:  emu,
 	}
 }
 
-func (g *game) Init() {
-	g.screen.Clear()
-}
-
 func (g *game) Update() error {
-	x := rand.Intn(g.screen.Width)
-	y := rand.Intn(g.screen.Height)
-	g.screen.pixel[x][y] = true
+	g.emu.Step()
+
 	return nil
 }
 
 func (g *game) Draw(screen *ebiten.Image) {
-	stage := ebiten.NewImage(g.screen.Width, g.screen.Height)
+	stage := ebiten.NewImage(g.emu.Width, g.emu.Height)
 	stage.Fill(g.opts.BgColor)
-	for x := 0; x < g.screen.Width; x++ {
-		for y := 0; y < g.screen.Height; y++ {
-			if g.screen.pixel[x][y] {
+	for x := 0; x < g.emu.Width; x++ {
+		for y := 0; y < g.emu.Height; y++ {
+			if g.emu.PixelAt(x, y) {
 				stage.Set(x, y, g.opts.FgColor)
 			}
 		}
@@ -63,10 +55,6 @@ func (g *game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, "Hello, World!")
 }
 
-func (g *game) ScreenSize() (width, height int) {
-	return g.screen.Width * g.opts.Scale, g.screen.Height * g.opts.Scale
-}
-
 func (g *game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return g.ScreenSize()
+	return g.emu.Width * g.opts.Scale, g.emu.Height * g.opts.Scale
 }
